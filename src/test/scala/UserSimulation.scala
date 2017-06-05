@@ -17,7 +17,7 @@ object User {
         .asJSON
         .body(StringBody("""{ "name": "${PersonName}", "age": ${PersonAge} }"""))
         .check(status.is(201)))
-        .pause(1) //15 sec
+        .pause(10) //10 sec
       }
 
   val bulk = repeat(10, "n") {
@@ -27,7 +27,7 @@ object User {
         .asJSON
         .body(StringBody("""[""" + (1 to 10).map{ i => """{ "name": "${PersonName"""+i+"""}", "age": ${PersonAge"""+i+"""} }"""}.mkString(",") + """]"""))
         .check(status.is(201)))
-        .pause(1) //150 sec
+        .pause(100) //100 sec
       }
 
   val browse = repeat(5, "n") {
@@ -39,14 +39,14 @@ object User {
             jsonPath("$..name").findAll.saveAs("names")
           }
         ))
-        .pause(1) //60 sec
+        .pause(50) //50 sec
       }
 
   val search = repeat(10, "n") {
         exec(http("Person Search")
         .get("/persons/name/${names.random()}")
         .check(status.is(200)))
-        .pause(1) //5 sec
+        .pause(5) //5 sec
       }
 }
 
@@ -58,7 +58,7 @@ class UserSimulation extends Simulation {
   val userScenario = scenario("Typical User")
     .exec(User.create, User.bulk, User.browse, User.search)
 
-  setUp(userScenario.inject(rampUsers(1) over (10 seconds))
+  setUp(userScenario.inject(rampUsers(200) over (60 seconds))
     .protocols(httpConf))
     .assertions(global.responseTime.max.lte(2000))  
 }
